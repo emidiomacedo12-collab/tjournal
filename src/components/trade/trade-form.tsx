@@ -2,17 +2,10 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { createTrade } from "@/lib/actions/trade";
+import { storage, Trade as StorageTrade } from "@/lib/storage";
 
-export interface Trade {
-    symbol: string;
-    side: "BUY" | "SELL";
-    price: number;
-    quantity: number;
-    timestamp: string;
-    pnl?: number;
-    notes?: string;
-}
+// Define a local form interface or re-export
+export type Trade = StorageTrade;
 
 interface TradeFormProps {
     onAddTrade: (trade: Trade) => void;
@@ -40,16 +33,15 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) {
-            setMessage("Please log in to add trades.");
-            return;
-        }
+        // Removed user check since we are using local storage for demo, or we can keep it if we want to simulate auth requirement
+        // if (!user) ...
 
         setLoading(true);
         setMessage("");
 
         try {
-            const result = await createTrade({
+            // Using local storage sync function
+            const newTrade = storage.addTrade({
                 symbol: formData.symbol!.toUpperCase(),
                 side: formData.side as "BUY" | "SELL",
                 price: Number(formData.price),
@@ -57,12 +49,12 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                 pnl: formData.pnl ? Number(formData.pnl) : undefined,
                 notes: formData.notes,
                 timestamp: formData.timestamp,
-                userId: user.id,
+                userId: user?.id || "demo-user", // Fallback to demo user
             });
 
-            if (result.success && result.trade) {
-                onAddTrade(result.trade as any); // Cast to any to avoid strict type mismatch with Date objects if needed
-                setMessage(`Trade for ${result.trade.symbol} saved to database!`);
+            if (newTrade) {
+                onAddTrade(newTrade);
+                setMessage(`Trade for ${newTrade.symbol} saved!`);
                 // Reset form
                 setFormData((prev) => ({
                     ...prev,
@@ -85,7 +77,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
     };
 
     return (
-        <div className="bg-card p-6 rounded-xl shadow-lg border border-border">
+        <div className="bg-card p-4 md:p-6 rounded-xl shadow-lg border border-border">
             <h2 className="text-xl font-bold mb-6 text-card-foreground flex items-center gap-2">
                 <span className="text-blue-600">✍️</span> Log Trade
             </h2>

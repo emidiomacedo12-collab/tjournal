@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Trade } from "@/components/trade/trade-form";
+import { Trade } from "@/lib/storage";
 
 interface CalendarViewProps {
     trades: Trade[];
@@ -90,7 +90,7 @@ export function CalendarView({ trades, currentDate, onMonthChange, onAddTrade }:
                 {daysInMonth.map(({ day, dailyPnL, tradeCount, date }) => (
                     <div
                         key={day}
-                        className={`aspect-square h-32 w-full rounded-lg border flex flex-col items-center justify-center p-1 transition-colors relative group ${tradeCount > 0
+                        className={`aspect-square md:h-32 w-full rounded-lg border flex flex-col items-center justify-center p-1 transition-colors relative group ${tradeCount > 0
                             ? dailyPnL > 0
                                 ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
                                 : dailyPnL < 0
@@ -99,7 +99,7 @@ export function CalendarView({ trades, currentDate, onMonthChange, onAddTrade }:
                             : 'bg-transparent border-transparent text-zinc-300 dark:text-zinc-700'
                             }`}
                     >
-                        <span className="text-xs font-medium absolute top-2 left-2 opacity-60">{day}</span>
+                        <span className="text-[10px] md:text-xs font-medium absolute top-1 left-1 md:top-2 md:left-2 opacity-60">{day}</span>
 
                         {/* Quick Add Button */}
                         {onAddTrade && (
@@ -108,10 +108,10 @@ export function CalendarView({ trades, currentDate, onMonthChange, onAddTrade }:
                                     e.stopPropagation();
                                     onAddTrade(date);
                                 }}
-                                className="absolute top-2 right-2 p-1 bg-background rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                                className="absolute top-1 right-1 md:top-2 md:right-2 p-1 bg-background rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                                 title="Add Trade"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 md:w-3 md:h-3">
                                     <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
                                 </svg>
                             </button>
@@ -119,13 +119,10 @@ export function CalendarView({ trades, currentDate, onMonthChange, onAddTrade }:
 
                         {tradeCount > 0 && (
                             <>
-                                <span className="text-xl font-bold tracking-tight">
+                                <span className="text-xs md:text-xl font-bold tracking-tight mt-3 md:mt-0">
                                     {dailyPnL > 0 ? '+' : ''}{Math.abs(dailyPnL) >= 1000 ? `${(dailyPnL / 1000).toFixed(1)}k` : Math.round(dailyPnL)}
                                 </span>
-                                <span className="text-xs opacity-70 mt-1">{tradeCount} trades</span>
-                                <div className="text-xs mt-1 font-medium bg-background px-1.5 py-0.5 rounded">
-                                    {dailyPnL > 0 ? 'WIN' : 'LOSS'}
-                                </div>
+                                <span className="hidden md:inline text-xs opacity-70 mt-1">{tradeCount} trades</span>
                             </>
                         )}
                     </div>

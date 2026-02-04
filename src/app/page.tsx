@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
+import { storage } from "@/lib/storage";
 import { TradeForm, Trade } from "@/components/trade/trade-form";
 import { StatsOverview, TradeStats } from "@/components/dashboard/stats-overview";
 import { TradeList } from "@/components/dashboard/trade-list";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { EquityCurve } from "@/components/dashboard/equity-curve";
 import { TradeDetailModal } from "@/components/trade/trade-detail-modal";
-import { getTrades, deleteTrade, updateTrade } from "@/lib/actions/trade";
-
 import { AddTradeModal } from "@/components/trade/add-trade-modal";
 import { useTheme } from "@/context/theme-context";
 
@@ -29,25 +28,20 @@ export default function Home() {
 
   // Fetch trades helper
   const fetchTrades = async () => {
-    if (user) {
-      // Filter by current month/year
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
+    // In local storage mode, we can fetch even if user is "not logged in" for demo purposes, 
+    // but keeping the check for consistency if we wanted to enforce "auth"
+    const allTrades = storage.getTrades();
 
-      getTrades(user.id, year, month).then((data) => {
-        const formattedTrades = data.map((t: any) => ({
-          ...t,
-          side: t.side as "BUY" | "SELL",
-          timestamp: typeof t.timestamp === 'string' ? t.timestamp : t.timestamp.toISOString(),
-          pnl: t.pnl ? Number(t.pnl) : undefined,
-          price: Number(t.price),
-          quantity: Number(t.quantity),
-        }));
-        setTrades(formattedTrades);
-      });
-    } else {
-      setTrades([]);
-    }
+    // Filter by current month/year
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const filteredTrades = allTrades.filter(t => {
+      const date = new Date(t.timestamp);
+      return date.getFullYear() === year && date.getMonth() === month;
+    });
+
+    setTrades(filteredTrades as Trade[]);
   };
 
   // Fetch trades when user logs in
@@ -77,15 +71,15 @@ export default function Home() {
 
   const handleDeleteTrade = async (id: string) => {
     // Optimistic delete
-    setTrades(prev => prev.filter(t => (t as any).id !== id));
-    await deleteTrade(id);
+    setTrades(prev => prev.filter(t => t.id !== id));
+    storage.deleteTrade(id);
     await fetchTrades();
   };
 
   const handleUpdateTrade = async (id: string, updatedData: any) => {
     // Optimistic update
-    setTrades(prev => prev.map(t => (t as any).id === id ? { ...t, ...updatedData } : t));
-    await updateTrade(id, updatedData);
+    setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+    storage.updateTrade(id, updatedData);
     await fetchTrades();
   };
 
@@ -94,9 +88,9 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-8 bg-background text-foreground font-sans pb-32">
-      <nav className="w-full max-w-7xl flex items-center justify-between mb-8 p-6 rounded-2xl bg-card/50 backdrop-blur-md border border-border sticky top-4 z-50">
-        <div className="flex items-center gap-2">
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-background text-foreground font-sans pb-32">
+      <nav className="w-full max-w-7xl flex flex-col md:flex-row items-center justify-between mb-8 p-4 md:p-6 rounded-2xl bg-card/50 backdrop-blur-md border border-border sticky top-4 z-50 gap-4">
+        <div className="flex items-center gap-2 self-start md:self-auto">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">TJ</div>
           <span className="font-bold text-lg tracking-tight">TradeJournal</span>
         </div>

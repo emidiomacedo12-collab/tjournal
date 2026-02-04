@@ -1,9 +1,14 @@
-import { Trade } from "@/components/trade/trade-form";
+import { Trade } from "@/lib/storage";
 
-// Extend Trade definition to include optional ID for delete
+// Trade from storage has 'id', so we don't need to extend it to add 'id', 
+// but we might want to ensure 'notes' is there or just use Trade directly.
+// The lint error was "Interface 'TradeWithId' incorrectly extends interface 'Trade'. Types of property 'id' are incompatible."
+// This is because Trade has mandatory 'id', and here we tried to make it optional (id?: string).
+// We should use the Trade type as is, since our list assumes trades exist and have IDs.
+
 interface TradeWithId extends Trade {
-    id?: string;
-    notes?: string;
+    // No extra fields needed if Trade already has id and notes. 
+    // If we need to relax it, we should Omit first.
 }
 
 interface TradeListProps {

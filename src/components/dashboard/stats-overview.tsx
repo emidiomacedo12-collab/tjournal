@@ -25,7 +25,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
             {/* Avg Stats */}
             <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
                 <h3 className="text-sm font-medium text-zinc-500 mb-1">Avg Win / Loss</h3>
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
                     <span className="text-lg font-bold text-green-600">${stats.avgWinner.toFixed(2)}</span>
                     <span className="text-sm text-zinc-400">/</span>
                     <span className="text-lg font-bold text-red-600">${Math.abs(stats.avgLoser).toFixed(2)}</span>

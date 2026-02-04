@@ -9,7 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-import { Trade } from "@/components/trade/trade-form";
+import { Trade } from "@/lib/storage";
 
 interface EquityCurveProps {
     trades: Trade[];
@@ -57,7 +57,7 @@ export function EquityCurve({ trades }: EquityCurveProps) {
                     <Tooltip
                         contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5' }}
                         itemStyle={{ color: '#f4f4f5' }}
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, "Equity"]}
+                        formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}`, "Equity"]}
                         labelFormatter={(label) => `Trade #${label}`}
                     />
                     <Line

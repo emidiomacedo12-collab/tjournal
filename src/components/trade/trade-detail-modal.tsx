@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trade } from "@/components/trade/trade-form";
+import { Trade } from "@/lib/storage";
 
-// Extended trade interface for editing (including ID)
+// Trade has mandatory id.
 interface EditableTrade extends Trade {
-    id?: string;
-    notes?: string;
+    // Just pass through
 }
 
 interface TradeDetailModalProps {
@@ -63,13 +62,13 @@ export function TradeDetailModal({ isOpen, trade, onClose, onSave }: TradeDetail
             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/30">
+                <div className="p-4 md:p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/30">
                     <div>
                         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                             {trade.symbol}
                             <span className={`px-2.5 py-0.5 rounded-full text-sm font-medium ${trade.side === "BUY"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                                 }`}>
                                 {trade.side}
                             </span>
