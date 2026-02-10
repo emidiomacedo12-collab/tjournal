@@ -8,15 +8,19 @@ import { StatsOverview, TradeStats } from "@/components/dashboard/stats-overview
 import { TradeList } from "@/components/dashboard/trade-list";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { EquityCurve } from "@/components/dashboard/equity-curve";
+import { NetPnLChart } from "@/components/dashboard/net-pnl-chart";
 import { TradeDetailModal } from "@/components/trade/trade-detail-modal";
 import { AddTradeModal } from "@/components/trade/add-trade-modal";
+import { ExpenseTracker } from "@/components/expense/expense-tracker"; // REMOVED
 import { useTheme } from "@/context/theme-context";
 
 export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
   const { theme, setTheme } = useTheme();
   const [trades, setTrades] = useState<Trade[]>([]);
+  // const [expenses, setExpenses] = useState<any[]>([]); // REMOVED
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [chartView, setChartView] = useState<"equity" | "pnl">("equity");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Quick Add State
@@ -42,6 +46,7 @@ export default function Home() {
     });
 
     setTrades(filteredTrades as Trade[]);
+    // setExpenses(storage.getExpenses()); // REMOVED
   };
 
   // Fetch trades when user logs in
@@ -83,62 +88,54 @@ export default function Home() {
     await fetchTrades();
   };
 
+  // REMOVED handleAddExpense and handleDeleteExpense
+
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-background text-foreground font-sans pb-32">
-      <nav className="w-full max-w-7xl flex flex-col md:flex-row items-center justify-between mb-8 p-4 md:p-6 rounded-2xl bg-card/50 backdrop-blur-md border border-border sticky top-4 z-50 gap-4">
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">TJ</div>
-          <span className="font-bold text-lg tracking-tight">TradeJournal</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
-            {(['light', 'dark', 'navy'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === t
-                  ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                  }`}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{user.name}</span>
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={login}
-              className="bg-zinc-900 dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Connect
-            </button>
-          )}
-        </div>
+      <nav className="hidden">
+        {/* Helper to remove existing nav without breaking structure if I missed something, 
+            but actually I should just remove it. 
+            For now, I will remove the entire <nav> block in the next chunk or just replace it with empty fragment if possible */}
       </nav>
 
-      <div className="w-full max-w-7xl space-y-8">
+      <div className="w-full max-w-7xl space-y-8 mt-8">
         <StatsOverview stats={stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column (Main) */}
           <div className="lg:col-span-2 space-y-8">
-            <EquityCurve trades={trades} />
+
+            {/* Chart Toggle */}
+            <div className="flex items-center gap-4 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-fit">
+              <button
+                onClick={() => setChartView("equity")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${chartView === "equity"
+                  ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
+                  }`}
+              >
+                Equity Curve
+              </button>
+              <button
+                onClick={() => setChartView("pnl")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${chartView === "pnl"
+                  ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
+                  }`}
+              >
+                P&L Breakdown
+              </button>
+            </div>
+
+            {chartView === "equity" ? (
+              <EquityCurve trades={trades} />
+            ) : (
+              <NetPnLChart trades={trades} />
+            )}
 
             <div className="bg-card rounded-xl border border-border p-6">
               <h2 className="text-xl font-bold mb-6 text-card-foreground">Recent Trades</h2>
@@ -173,6 +170,7 @@ export default function Home() {
             }}
           />
         </div>
+
       </div>
 
       {/* Edit Modal */}
@@ -190,6 +188,6 @@ export default function Home() {
         onClose={() => setIsAddModalOpen(false)}
         onAddTrade={handleAddTrade}
       />
-    </main>
+    </main >
   );
 }

@@ -13,6 +13,15 @@ export interface Trade {
   updatedAt: string;
 }
 
+export interface Expense {
+  id: string;
+  date: string; // ISO string
+  description: string;
+  amount: number;
+  category: string;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -24,6 +33,7 @@ const STORAGE_KEY = "trade-journal-data";
 interface StorageData {
   user: User;
   trades: Trade[];
+  expenses: Expense[];
 }
 
 const INITIAL_DATA: StorageData = {
@@ -33,6 +43,7 @@ const INITIAL_DATA: StorageData = {
     name: "Demo User",
   },
   trades: [],
+  expenses: [],
 };
 
 // Helper to get data from storage with type safety
@@ -122,6 +133,42 @@ export const storage = {
     data.trades = data.trades.filter(t => t.id !== id);
 
     if (data.trades.length !== initialLength) {
+      saveData(data);
+      return true;
+    }
+    return false;
+  },
+
+  getExpenses: () => {
+    return getData().expenses;
+  },
+
+  addExpense: (expense: Omit<Expense, "id" | "createdAt">) => {
+    const data = getData();
+    const newExpense: Expense = {
+      id: Date.now().toString(),
+      description: expense.description,
+      category: expense.category,
+      amount: Number(expense.amount),
+      date: expense.date,
+      type: expense.type || 'EXPENSE',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!data.expenses) {
+      data.expenses = [];
+    }
+    data.expenses.unshift(newExpense);
+    saveData(data);
+    return newExpense;
+  },
+
+  deleteExpense: (id: string) => {
+    const data = getData();
+    const initialLength = data.expenses.length;
+    data.expenses = data.expenses.filter(e => e.id !== id);
+
+    if (data.expenses.length !== initialLength) {
       saveData(data);
       return true;
     }
