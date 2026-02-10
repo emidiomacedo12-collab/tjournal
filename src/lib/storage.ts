@@ -19,6 +19,7 @@ export interface Expense {
   description: string;
   amount: number;
   category: string;
+  type?: 'EXPENSE' | 'REFUND';
   createdAt: string;
 }
 
