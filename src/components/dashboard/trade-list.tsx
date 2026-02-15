@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Trade } from "@/lib/storage";
 
 // Trade from storage has 'id', so we don't need to extend it to add 'id', 
@@ -18,6 +19,8 @@ interface TradeListProps {
 }
 
 export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
     if (trades.length === 0) {
         return (
             <div className="text-zinc-500 dark:text-zinc-400 text-center py-8">
@@ -37,6 +40,7 @@ export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
                         <th className="px-4 py-3">Price</th>
                         <th className="px-4 py-3">Qty</th>
                         <th className="px-4 py-3">P&L</th>
+                        <th className="px-4 py-3">Media</th>
                         <th className="px-4 py-3 rounded-r-lg">Action</th>
                     </tr>
                 </thead>
@@ -62,6 +66,19 @@ export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
                                 }`}>
                                 {(trade.pnl || 0) >= 0 ? "+" : ""}${(trade.pnl || 0).toFixed(2)}
                             </td>
+                            <td className="px-4 py-3">
+                                {trade.screenshotUrl && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImage(trade.screenshotUrl!);
+                                        }}
+                                        className="text-blue-500 hover:text-blue-600 hover:underline text-xs"
+                                    >
+                                        📷 View
+                                    </button>
+                                )}
+                            </td>
                             <td className="px-4 py-3 text-center">
                                 {trade.id && (
                                     <button
@@ -82,6 +99,28 @@ export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
                     ))}
                 </tbody>
             </table>
+
+            {/* Image Modal */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="relative max-w-4xl max-h-[90vh] w-full">
+                        <img
+                            src={selectedImage}
+                            alt="Trade Screenshot"
+                            className="w-full h-full object-contain rounded-lg"
+                        />
+                        <button
+                            className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70"
+                            onClick={() => setSelectedImage(null)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

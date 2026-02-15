@@ -11,6 +11,15 @@ export interface Trade {
   timestamp: string; // ISO string
   createdAt: string;
   updatedAt: string;
+  // New fields for disciplined trading
+  mentalState?: string;
+  setupLevel?: string;
+  setupType?: string;
+  outcome?: string;
+  screenshotUrl?: string;
+  exitPrice?: number;
+  stopLoss?: number;
+  target?: number;
 }
 
 export interface Expense {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Expense, storage } from "@/lib/storage";
 import { ExpenseCategoryChart } from "./expense-category-chart";
 
@@ -8,14 +8,22 @@ interface ExpenseTrackerProps {
     expenses: Expense[];
     onAddExpense: (expense: Expense) => void;
     onDeleteExpense: (id: string) => void;
+    initialDate?: Date;
 }
 
-export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense }: ExpenseTrackerProps) {
+export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense, initialDate }: ExpenseTrackerProps) {
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("Other");
     const [type, setType] = useState<"EXPENSE" | "REFUND">("EXPENSE");
-    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+    const [date, setDate] = useState((initialDate || new Date()).toISOString().split("T")[0]);
+
+    // Update date when initialDate changes
+    useEffect(() => {
+        if (initialDate) {
+            setDate(initialDate.toISOString().split("T")[0]);
+        }
+    }, [initialDate]);
 
     const categories = ["Software", "Data", "Education", "Hardware", "Other"];
 
@@ -38,7 +46,7 @@ export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense }: Expe
         setAmount("");
         setCategory("Other");
         setType("EXPENSE");
-        setDate(new Date().toISOString().split("T")[0]);
+        // Keep the currently selected date
     };
 
     const totalExpenses = (expenses || []).reduce((acc, curr) => {

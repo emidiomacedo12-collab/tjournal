@@ -35,16 +35,26 @@ model Trade {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId String?
   account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  symbol    String
-  side      String
-  price     Decimal
-  quantity  Decimal
-  pnl       Decimal?
-  notes     String?
-  timestamp DateTime @default(now())
-  tags      Tag[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  symbol        String
+  side          String
+  price         Decimal
+  quantity      Decimal
+  pnl           Decimal?
+  notes         String?
+  // New fields for disciplined trading
+  mentalState   String?  // Zen, Anxious, Tilted
+  setupLevel    String?  // PDH, PDL, PMH, PML, Weekly High/Low, No Mans Land
+  setupType     String?  // Break & Retest, Rejection, Trap
+  outcome       String?  // A+ Execution, FOMO, Early Exit, Revenge
+  screenshotUrl String?
+  exitPrice     Decimal?
+  stopLoss      Decimal?
+  target        Decimal?
+  
+  timestamp     DateTime @default(now())
+  tags          Tag[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Tag {
