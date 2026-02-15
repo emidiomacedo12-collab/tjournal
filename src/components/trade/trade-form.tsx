@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { storage, Trade as StorageTrade } from "@/lib/storage";
+import { parseTradeScreenshot } from "@/lib/ocr";
 
 // Define a local form interface or re-export
 export type Trade = StorageTrade;
@@ -17,6 +18,9 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
 
     // --- Phase & Form State ---
     const [currentPhase, setCurrentPhase] = useState<"A" | "B" | "C">("A");
+
+    // OCR Scanning State
+    const [isScanning, setIsScanning] = useState(false);
 
     const [formData, setFormData] = useState<Partial<Trade> & {
         timestamp: string;
@@ -37,7 +41,8 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
         stopLoss: undefined,
         target: undefined,
         confirmClose: false,
-        confirmStructure: false
+        confirmStructure: false,
+        screenshotUrl: undefined
     });
 
     const [loading, setLoading] = useState(false);
@@ -56,6 +61,45 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
         : undefined;
 
     // --- Event Handlers ---
+
+    // OCR Scan Handler
+    const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsScanning(true);
+        setMessage("Scanning screenshot...");
+
+        try {
+            const data = await parseTradeScreenshot(file);
+            console.log("Scanned Data:", data);
+
+            setFormData(prev => ({
+                ...prev,
+                symbol: data.symbol || prev.symbol,
+                side: data.side || prev.side,
+                price: data.price || prev.price,
+                quantity: data.quantity || prev.quantity
+            }));
+
+            const found = [];
+            if (data.symbol) found.push("Symbol");
+            if (data.price) found.push("Price");
+            if (data.side) found.push("Side");
+
+            if (found.length > 0) {
+                setMessage(`Auto-filled: ${found.join(", ")}`);
+            } else {
+                setMessage("Could not detect trade details. Please enter manually.");
+            }
+        } catch (error) {
+            console.error("Scan failed", error);
+            setMessage("Scan failed. Please try again.");
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
 
@@ -157,7 +201,8 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                     target: undefined,
                     exitPrice: undefined,
                     confirmClose: false,
-                    confirmStructure: false
+                    confirmStructure: false,
+                    screenshotUrl: undefined
                 });
                 setCurrentPhase("A");
             } else {
@@ -177,6 +222,34 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                 <span className="flex items-center gap-2">🛡️ The Gatekeeper</span>
                 <span className="text-sm font-normal text-zinc-500">Phase {currentPhase}/C</span>
             </h2>
+
+            {/* --- OCR SCANNER (Top of Form) --- */}
+            <div className="mb-8 p-4 bg-blue-500/5 rounded-lg border border-blue-500/20">
+                <label className="block text-sm font-bold text-blue-400 mb-2">
+                    🪄 Auto-Fill from Screenshot (Optional)
+                </label>
+                <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-blue-500/30 border-dashed rounded-lg cursor-pointer bg-blue-500/5 hover:bg-blue-500/10 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            {isScanning ? (
+                                <p className="text-sm text-blue-400 animate-pulse">Scanning...</p>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-zinc-400"><span className="font-semibold text-blue-400">Click to upload</span> broker screenshot</p>
+                                    <p className="text-xs text-zinc-500">Auto-detects Symbol, Price, Side</p>
+                                </>
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleScan}
+                            disabled={isScanning}
+                            className="hidden"
+                        />
+                    </label>
+                </div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -364,7 +437,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                 {currentPhase === "C" && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-8">
                         <div>
-                            <label className="block text-sm font-medium text-zinc-500 mb-1">Trade Screenshot</label>
+                            <label className="block text-sm font-medium text-zinc-500 mb-1">Chart / Analysis (Optional)</label>
 
                             <div className="flex items-center gap-4">
                                 <label className="flex-1 cursor-pointer">
@@ -383,7 +456,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                                         ) : (
                                             <>
                                                 <span className="text-2xl mb-2">📷</span>
-                                                <span className="text-sm text-zinc-500">Click to upload screenshot</span>
+                                                <span className="text-sm text-zinc-500">Click to upload chart</span>
                                             </>
                                         )}
                                     </div>
