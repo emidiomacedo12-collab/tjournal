@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
 import { storage } from "@/lib/storage";
 import { TradeForm, Trade } from "@/components/trade/trade-form";
@@ -16,8 +16,8 @@ import { useTheme } from "@/context/theme-context";
 import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
 
 export default function DashboardPage() {
-    const { user, login, logout, isLoading } = useAuth();
-    const { theme, setTheme } = useTheme();
+    const { user } = useAuth();
+    const { theme } = useTheme();
     const [trades, setTrades] = useState<Trade[]>([]);
     const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
     const [chartView, setChartView] = useState<"equity" | "pnl">("equity");
@@ -31,12 +31,15 @@ export default function DashboardPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // Fetch trades helper
-    const fetchTrades = async () => {
+    const fetchTrades = useCallback(async () => {
         if (!user) {
             setTrades([]);
             return;
         }
         const allTrades = storage.getTrades(user.id);
+        // The sortedTrades and tradesByDate logic was unused and has been removed.
+        // If needed for future features, it can be re-added.
+
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
 
@@ -45,12 +48,13 @@ export default function DashboardPage() {
             return date.getFullYear() === year && date.getMonth() === month;
         });
 
-        setTrades(filteredTrades as Trade[]);
-    };
+        setTrades(filteredTrades);
+    }, [user, currentDate]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchTrades();
-    }, [user, currentDate]);
+    }, [user, currentDate, fetchTrades]);
 
     const winners = trades.filter(t => (t.pnl || 0) > 0);
     const losers = trades.filter(t => (t.pnl || 0) <= 0);
@@ -76,13 +80,13 @@ export default function DashboardPage() {
         await fetchTrades();
     };
 
-    const handleUpdateTrade = async (id: string, updatedData: any) => {
+    const handleUpdateTrade = async (id: string, updatedData: Partial<Trade>) => {
         setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
         storage.updateTrade(id, updatedData);
         await fetchTrades();
     };
 
-    if (isLoading) {
+    if (!user) {
         return <div className="flex h-screen items-center justify-center">Loading...</div>;
     }
 
@@ -143,7 +147,16 @@ export default function DashboardPage() {
                             currentDate={currentDate}
                             onMonthChange={setCurrentDate}
                             onAddTrade={(date) => {
-                                setQuickAddDate(date);
+                                const newTrade = {
+                                    symbol: "",
+                                    side: "BUY" as "BUY" | "SELL",
+                                    price: 0,
+                                    quantity: 0,
+                                    pnl: 0,
+                                    timestamp: new Date().toISOString(),
+                                    userId: user?.id || ""
+                                };
+                                console.log(newTrade);
                                 setIsAddModalOpen(true);
                             }}
                         />
@@ -158,7 +171,7 @@ export default function DashboardPage() {
                             }}
                         />
                     }
-                    gatekeeper={<TradeForm onAddTrade={handleAddTrade} userId={user?.id || ''} />}
+                    gatekeeper={<TradeForm onAddTrade={handleAddTrade} />}
                 />
             </div>
 

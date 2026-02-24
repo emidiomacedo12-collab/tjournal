@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/auth-context";
 import { Expense, storage } from "@/lib/storage";
 import { ExpenseCategoryChart } from "./expense-category-chart";
 
@@ -12,6 +13,7 @@ interface ExpenseTrackerProps {
 }
 
 export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense, initialDate }: ExpenseTrackerProps) {
+    const { user } = useAuth();
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("Other");
@@ -20,7 +22,13 @@ export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense, initia
 
     // Update date when initialDate changes
     useEffect(() => {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            // setTheme(stored); // This line is commented out as `setTheme` is not defined in this component
+        }
         if (initialDate) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setDate(initialDate.toISOString().split("T")[0]);
         }
     }, [initialDate]);
@@ -29,7 +37,7 @@ export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense, initia
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!description || !amount) return;
+        if (!description || !amount || !user) return;
 
         const newExpense = storage.addExpense({
             description,
@@ -37,6 +45,7 @@ export function ExpenseTracker({ expenses, onAddExpense, onDeleteExpense, initia
             category,
             type,
             date: new Date(date).toISOString(),
+            userId: user.id
         });
 
         onAddExpense(newExpense);

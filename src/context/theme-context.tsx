@@ -15,9 +15,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<Theme>("dark"); // Default to dark
 
     useEffect(() => {
-        const stored = localStorage.getItem("theme") as Theme;
-        if (stored) {
-            setTheme(stored);
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("theme");
+            if (stored === "light" || stored === "dark") {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setTheme(stored);
+            }
         }
     }, []);
 

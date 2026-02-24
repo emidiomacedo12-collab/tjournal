@@ -37,12 +37,12 @@ export default function LandingPage() {
               Go to Dashboard
             </Link>
           ) : (
-            <button
-              onClick={login}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+            <Link
+              href="/login"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 text-center"
             >
               Start Journaling Now
-            </button>
+            </Link>
           )}
 
           <Link

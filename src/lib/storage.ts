@@ -20,6 +20,7 @@ export interface Trade {
   exitPrice?: number;
   stopLoss?: number;
   target?: number;
+  rMultiple?: number;
 }
 
 export interface Expense {
@@ -30,6 +31,7 @@ export interface Expense {
   category: string;
   type?: 'EXPENSE' | 'REFUND';
   createdAt: string;
+  userId: string;
 }
 
 export interface User {
@@ -188,7 +190,7 @@ export const storage = {
   getExpenses: (userId?: string) => {
     if (!userId) return [];
     // Expense interface doesn't have userId yet, I should add it or handle it
-    return (getData().expenses as any[]).filter(e => e.userId === userId);
+    return getData().expenses.filter(e => e.userId === userId);
   },
 
   addExpense: (expense: Omit<Expense, "id" | "createdAt"> & { userId: string }) => {

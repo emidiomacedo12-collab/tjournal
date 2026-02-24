@@ -11,7 +11,6 @@ export type Trade = StorageTrade;
 interface TradeFormProps {
     onAddTrade: (trade: Trade) => void;
     initialDate?: Date;
-    userId: string;
 }
 
 export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
@@ -66,10 +65,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
     // --- Event Handlers ---
 
     // OCR Scan Handler
-    const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const handleScreenshotUpload = async (file: File) => {
         setIsScanning(true);
         setMessage("Scanning screenshot...");
 
@@ -111,7 +107,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
 
-        let newValue: any = value;
+        let newValue: string | number | boolean | undefined = value;
         if (type === "checkbox") {
             newValue = (e.target as HTMLInputElement).checked;
         } else if (type === "number") {
@@ -251,7 +247,10 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={handleScan}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleScreenshotUpload(file);
+                            }}
                             disabled={isScanning}
                             className="hidden"
                         />

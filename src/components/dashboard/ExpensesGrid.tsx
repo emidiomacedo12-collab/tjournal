@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-// @ts-ignore
+import React, { useState, useEffect, useMemo } from "react";
 import { Responsive, WidthProvider, Layout } from "react-grid-layout/legacy";
 import { Widget } from "./Widget";
 import { debounce } from "lodash";
@@ -12,7 +11,10 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const STORAGE_KEY = "expenses-layout-v1";
 
-const defaultLayouts: { [key: string]: any[] } = {
+type GridLayoutItem = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
+type GridLayouts = Record<string, GridLayoutItem[]>;
+
+const defaultLayouts: GridLayouts = {
     lg: [
         { i: "summary", x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
         { i: "form", x: 0, y: 4, w: 4, h: 8, minW: 3, minH: 6 },
@@ -35,29 +37,34 @@ interface ExpensesGridProps {
 }
 
 export function ExpensesGrid({ summary, form, calendar, list }: ExpensesGridProps) {
-    const [layouts, setLayouts] = useState<{ [key: string]: any[] }>(defaultLayouts);
+    const [layouts, setLayouts] = useState<GridLayouts>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error("Failed to load layout", e);
+                }
+            }
+        }
+        return defaultLayouts;
+    });
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                setLayouts(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to load layout", e);
-            }
-        }
     }, []);
 
-    const saveLayout = React.useCallback(
-        debounce((allLayouts: { [key: string]: any[] }) => {
+    const saveLayout = useMemo(
+        () => debounce((allLayouts: GridLayouts) => {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allLayouts));
         }, 500),
         []
     );
 
-    const onLayoutChange = (currentLayout: any, allLayouts: any) => {
+    const onLayoutChange = (_currentLayout: any, allLayouts: any) => {
         if (mounted) {
             setLayouts(allLayouts);
             saveLayout(allLayouts);

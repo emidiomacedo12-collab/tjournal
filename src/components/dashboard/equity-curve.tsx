@@ -22,17 +22,18 @@ export function EquityCurve({ trades }: EquityCurveProps) {
     );
 
     // 2. Calculate cumulative P&L
-    let cumulativePnL = 0;
-    const data = sortedTrades.map((trade, index) => {
-        cumulativePnL += (trade.pnl || 0);
-        return {
+    const data = sortedTrades.reduce((acc, trade, index) => {
+        const pnl = Number(trade.pnl || 0);
+        const prevPnL = index > 0 ? acc[index - 1].pnl : 0;
+        acc.push({
             tradeNumber: index + 1,
-            pnl: cumulativePnL,
+            pnl: prevPnL + pnl,
             date: new Date(trade.timestamp).toLocaleDateString(),
             symbol: trade.symbol,
-            amount: trade.pnl,
-        };
-    });
+            amount: trade.pnl
+        });
+        return acc;
+    }, [] as { tradeNumber: number, pnl: number, date: string, symbol: string, amount: number | undefined }[]);
 
     // Start at 0
     const chartData = [{ tradeNumber: 0, pnl: 0, date: 'Start', symbol: '', amount: 0 }, ...data];
@@ -57,7 +58,7 @@ export function EquityCurve({ trades }: EquityCurveProps) {
                     <Tooltip
                         contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5' }}
                         itemStyle={{ color: '#f4f4f5' }}
-                        formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}`, "Equity"]}
+                        formatter={(value: string | number | undefined) => [`$${Number(value || 0).toFixed(2)}`, "Equity"]}
                         labelFormatter={(label) => `Trade #${label}`}
                     />
                     <Line

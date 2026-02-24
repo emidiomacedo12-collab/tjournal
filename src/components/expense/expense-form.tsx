@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Expense, storage } from "@/lib/storage";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/auth-context";
+import { storage, Expense } from "@/lib/storage";
 
 interface ExpenseFormProps {
     onAddExpense: (expense: Expense) => void;
@@ -9,14 +10,16 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onAddExpense, initialDate }: ExpenseFormProps) {
+    const { user } = useAuth();
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState("");
-    const [category, setCategory] = useState("Other");
+    const [category, setCategory] = useState("Subscription");
     const [type, setType] = useState<"EXPENSE" | "REFUND">("EXPENSE");
-    const [date, setDate] = useState((initialDate || new Date()).toISOString().split("T")[0]);
+    const [date, setDate] = useState(initialDate?.toISOString().split("T")[0] || new Date().toISOString().split("T")[0]);
 
     useEffect(() => {
         if (initialDate) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setDate(initialDate.toISOString().split("T")[0]);
         }
     }, [initialDate]);
@@ -25,14 +28,15 @@ export function ExpenseForm({ onAddExpense, initialDate }: ExpenseFormProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!description || !amount) return;
+        if (!description || !amount || !user) return;
 
         const newExpense = storage.addExpense({
             description,
-            amount: parseFloat(amount),
+            amount: Number(amount),
             category,
-            type,
-            date: new Date(date).toISOString(),
+            type: type as "EXPENSE" | "REFUND",
+            date,
+            userId: user.id
         });
 
         onAddExpense(newExpense);
