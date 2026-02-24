@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { storage } from "@/lib/storage";
+import { storage, Trade } from "@/lib/storage";
 
 export function CsvUploader() {
     const { user } = useAuth();
@@ -46,7 +46,7 @@ export function CsvUploader() {
 
             try {
                 const lines = text.split(/\r?\n/);
-                const tradesToAdd: any[] = [];
+                const tradesToAdd: Omit<Trade, "id" | "createdAt" | "updatedAt">[] = [];
                 let successCount = 0;
                 let failCount = 0;
 

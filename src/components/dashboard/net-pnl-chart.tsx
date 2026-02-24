@@ -48,7 +48,7 @@ export function NetPnLChart({ trades }: NetPnLChartProps) {
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(value: any) => [`$${value.toFixed(2)}`, "Amount"]}
+                            formatter={(value: number | string | undefined) => [`$${Number(value || 0).toFixed(2)}`, "Amount"]}
                             contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5' }}
                         />
                         <Legend verticalAlign="bottom" height={36} />

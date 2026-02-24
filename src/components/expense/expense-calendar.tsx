@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Expense } from "@/lib/storage";
 
 interface ExpenseCalendarProps {
@@ -13,13 +13,14 @@ export function ExpenseCalendar({ expenses, currentDate, onDateSelect }: Expense
     // Track the month we are VIEWING separate from the selected date
     const [viewDate, setViewDate] = useState(currentDate);
 
-    // Sync viewDate when currentDate changes (optional, but good for keeping context)
-    useMemo(() => {
+    // Sync viewDate when currentDate changes
+    useEffect(() => {
         // Only update if the month/year is different to avoid jumping around unnecessarily
         if (currentDate.getMonth() !== viewDate.getMonth() || currentDate.getFullYear() !== viewDate.getFullYear()) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setViewDate(currentDate);
         }
-    }, [currentDate]);
+    }, [currentDate, viewDate]);
 
     const handlePrevMonth = () => {
         setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));

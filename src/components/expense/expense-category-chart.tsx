@@ -70,7 +70,7 @@ export function ExpenseCategoryChart({ expenses }: ExpenseCategoryChartProps) {
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Net Amount"]}
+                            formatter={(value: number | string | undefined) => [`$${Number(value || 0).toFixed(2)}`, "Net Amount"]}
                             contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                         />
                         <Legend verticalAlign="bottom" height={36} />

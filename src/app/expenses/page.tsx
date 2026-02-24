@@ -11,17 +11,31 @@ import { storage, Expense } from "@/lib/storage";
 import { ExpensesGrid } from "@/components/dashboard/ExpensesGrid";
 
 export default function ExpensesPage() {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [isTrackerOpen, setIsTrackerOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [viewDate, setViewDate] = useState<Date>(new Date()); // Added viewDate state for calendar
 
+    // Sync expenses when user changes or initialization
     useEffect(() => {
         if (user) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             setExpenses(storage.getExpenses(user.id) || []);
         } else {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             setExpenses([]);
         }
     }, [user]);
+
+    // Update viewDate when selectedDate changes, but only if month/year is different
+    useEffect(() => {
+        // Only update if the month/year is different to avoid jumping around unnecessarily
+        if (selectedDate.getMonth() !== viewDate.getMonth() || selectedDate.getFullYear() !== viewDate.getFullYear()) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            setViewDate(selectedDate);
+        }
+    }, [selectedDate, viewDate]);
 
     const handleAddExpense = (expense: Omit<Expense, 'id' | 'createdAt'>) => {
         if (!user) return;

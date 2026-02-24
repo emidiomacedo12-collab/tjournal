@@ -4,19 +4,15 @@ import { useState, useEffect } from "react";
 import { Trade } from "@/lib/storage";
 
 // Trade has mandatory id.
-interface EditableTrade extends Trade {
-    // Just pass through
-}
-
 interface TradeDetailModalProps {
     isOpen: boolean;
-    trade: EditableTrade | null;
+    trade: Trade | null;
     onClose: () => void;
-    onSave: (id: string, updatedData: Partial<Trade> & { notes?: string }) => Promise<void>;
+    onSave: (id: string, data: Partial<Trade>) => void;
 }
 
 export function TradeDetailModal({ isOpen, trade, onClose, onSave }: TradeDetailModalProps) {
-    const [formData, setFormData] = useState<Partial<EditableTrade>>({});
+    const [formData, setFormData] = useState<Partial<Trade>>({});
     const [loading, setLoading] = useState(false);
 
     // Initialize form data when trade changes

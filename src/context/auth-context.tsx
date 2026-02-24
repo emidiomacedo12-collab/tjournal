@@ -21,16 +21,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(() => {
+        if (typeof window !== "undefined") {
+            const storedUser = localStorage.getItem("current_user");
+            return storedUser ? JSON.parse(storedUser) : null;
+        }
+        return null;
+    });
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("current_user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+        // Persist user changes (login/logout will call setUser)
+        if (user) {
+            localStorage.setItem("current_user", JSON.stringify(user));
+        } else {
+            localStorage.removeItem("current_user");
         }
-        setIsLoading(false);
-    }, []);
+    }, [user]);
 
     const login = async (email: string, password: string) => {
         const existingUser = storage.findUserByEmail(email);

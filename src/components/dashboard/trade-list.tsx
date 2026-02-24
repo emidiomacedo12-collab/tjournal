@@ -7,15 +7,11 @@ import { Trade } from "@/lib/storage";
 // This is because Trade has mandatory 'id', and here we tried to make it optional (id?: string).
 // We should use the Trade type as is, since our list assumes trades exist and have IDs.
 
-interface TradeWithId extends Trade {
-    // No extra fields needed if Trade already has id and notes. 
-    // If we need to relax it, we should Omit first.
-}
 
 interface TradeListProps {
-    trades: TradeWithId[];
+    trades: Trade[];
     onDelete: (id: string) => void;
-    onSelect: (trade: TradeWithId) => void;
+    onSelect: (trade: Trade) => void;
 }
 
 export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
