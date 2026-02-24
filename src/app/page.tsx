@@ -1,193 +1,92 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
-import { storage } from "@/lib/storage";
-import { TradeForm, Trade } from "@/components/trade/trade-form";
-import { StatsOverview, TradeStats } from "@/components/dashboard/stats-overview";
-import { TradeList } from "@/components/dashboard/trade-list";
-import { CalendarView } from "@/components/dashboard/calendar-view";
-import { EquityCurve } from "@/components/dashboard/equity-curve";
-import { NetPnLChart } from "@/components/dashboard/net-pnl-chart";
-import { TradeDetailModal } from "@/components/trade/trade-detail-modal";
-import { AddTradeModal } from "@/components/trade/add-trade-modal";
-import { ExpenseTracker } from "@/components/expense/expense-tracker"; // REMOVED
-import { useTheme } from "@/context/theme-context";
 
-export default function Home() {
-  const { user, login, logout, isLoading } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const [trades, setTrades] = useState<Trade[]>([]);
-  // const [expenses, setExpenses] = useState<any[]>([]); // REMOVED
-  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const [chartView, setChartView] = useState<"equity" | "pnl">("equity");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Quick Add State
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [quickAddDate, setQuickAddDate] = useState<Date | null>(null);
-
-  // Lifted Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  // Fetch trades helper
-  const fetchTrades = async () => {
-    // In local storage mode, we can fetch even if user is "not logged in" for demo purposes, 
-    // but keeping the check for consistency if we wanted to enforce "auth"
-    const allTrades = storage.getTrades();
-
-    // Filter by current month/year
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    const filteredTrades = allTrades.filter(t => {
-      const date = new Date(t.timestamp);
-      return date.getFullYear() === year && date.getMonth() === month;
-    });
-
-    setTrades(filteredTrades as Trade[]);
-    // setExpenses(storage.getExpenses()); // REMOVED
-  };
-
-  // Fetch trades when user logs in
-  useEffect(() => {
-    fetchTrades();
-  }, [user, currentDate]); // Re-fetch when user or date changes
-
-  // Calculate Stats
-  const winners = trades.filter(t => (t.pnl || 0) > 0);
-  const losers = trades.filter(t => (t.pnl || 0) <= 0);
-
-  const grossProfit = winners.reduce((acc, curr) => acc + (curr.pnl || 0), 0);
-  const grossLoss = losers.reduce((acc, curr) => acc + (curr.pnl || 0), 0);
-
-  const stats: TradeStats = {
-    totalTrades: trades.length,
-    totalPnL: trades.reduce((acc, curr) => acc + (curr.pnl || 0), 0),
-    winRate: trades.length > 0 ? (winners.length / trades.length) * 100 : 0,
-    profitFactor: Math.abs(grossLoss) > 0 ? grossProfit / Math.abs(grossLoss) : grossProfit > 0 ? 100 : 0,
-    avgWinner: winners.length > 0 ? grossProfit / winners.length : 0,
-    avgLoser: losers.length > 0 ? grossLoss / losers.length : 0,
-  };
-
-  const handleAddTrade = async (newTrade: Trade) => {
-    await fetchTrades();
-  };
-
-  const handleDeleteTrade = async (id: string) => {
-    // Optimistic delete
-    setTrades(prev => prev.filter(t => t.id !== id));
-    storage.deleteTrade(id);
-    await fetchTrades();
-  };
-
-  const handleUpdateTrade = async (id: string, updatedData: any) => {
-    // Optimistic update
-    setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
-    storage.updateTrade(id, updatedData);
-    await fetchTrades();
-  };
-
-  // REMOVED handleAddExpense and handleDeleteExpense
-
-  if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
-  }
+export default function LandingPage() {
+  const { user, login } = useAuth();
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-background text-foreground font-sans pb-32">
-      <nav className="hidden">
-        {/* Helper to remove existing nav without breaking structure if I missed something, 
-            but actually I should just remove it. 
-            For now, I will remove the entire <nav> block in the next chunk or just replace it with empty fragment if possible */}
-      </nav>
-
-      <div className="w-full max-w-7xl space-y-8 mt-8">
-        <StatsOverview stats={stats} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column (Main) */}
-          <div className="lg:col-span-2 space-y-8">
-
-            {/* Chart Toggle */}
-            <div className="flex items-center gap-4 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-fit">
-              <button
-                onClick={() => setChartView("equity")}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${chartView === "equity"
-                  ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
-                  }`}
-              >
-                Equity Curve
-              </button>
-              <button
-                onClick={() => setChartView("pnl")}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${chartView === "pnl"
-                  ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
-                  }`}
-              >
-                P&L Breakdown
-              </button>
-            </div>
-
-            {chartView === "equity" ? (
-              <EquityCurve trades={trades} />
-            ) : (
-              <NetPnLChart trades={trades} />
-            )}
-
-            <div className="bg-card rounded-xl border border-border p-6">
-              <h2 className="text-xl font-bold mb-6 text-card-foreground">Recent Trades</h2>
-              <TradeList
-                trades={trades}
-                onDelete={handleDeleteTrade}
-                onSelect={(trade) => {
-                  setSelectedTrade(trade);
-                  setIsModalOpen(true);
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Right Column (Sidebar: Form) */}
-          <div className="lg:col-span-1 space-y-8">
-            <div className="sticky top-32">
-              <TradeForm onAddTrade={handleAddTrade} />
-            </div>
-          </div>
+    <main className="flex min-h-[calc(100vh-80px)] flex-col items-center justify-center bg-background text-foreground px-6 py-12">
+      <div className="max-w-4xl w-full text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="inline-flex items-center gap-2 bg-blue-600/10 text-blue-500 px-4 py-2 rounded-full text-sm font-bold border border-blue-500/20 mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          Next Gen Trading Journal
         </div>
 
-        {/* Bottom Full Width (Calendar) */}
-        <div className="w-full">
-          <CalendarView
-            trades={trades}
-            currentDate={currentDate}
-            onMonthChange={setCurrentDate}
-            onAddTrade={(date) => {
-              setQuickAddDate(date);
-              setIsAddModalOpen(true);
-            }}
-          />
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight">
+          Track Every Trade. <br />
+          <span className="bg-gradient-to-r from-blue-600 to-emerald-400 bg-clip-text text-transparent">
+            Master Your Edge.
+          </span>
+        </h1>
+
+        <p className="text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+          The professional journal for serious traders. Multi-phase entry, OCR screenshot scanning, and deep performance analytics—all in one beautiful dark dashboard.
+        </p>
+
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <button
+              onClick={login}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              Start Journaling Now
+            </button>
+          )}
+
+          <Link
+            href="/expenses"
+            className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 px-8 py-4 rounded-xl text-lg font-bold transition-all"
+          >
+            Manage Financials
+          </Link>
         </div>
 
+        {/* Feature Grid Preview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-24">
+          <div className="bg-card p-6 rounded-2xl border border-border text-left space-y-3">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v16.5m0-16.5L12 12m-8.25-8.25L12 12m8.25 8.25L12 12m8.25-8.25L3.75 3.75" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg">Draggable Layout</h3>
+            <p className="text-sm text-zinc-500">Customize your workspace exactly how you like it with our widget system.</p>
+          </div>
+
+          <div className="bg-card p-6 rounded-2xl border border-border text-left space-y-3">
+            <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg">OCR Scanning</h3>
+            <p className="text-sm text-zinc-500">Upload your trade screenshots and let us extract the P&L automatically.</p>
+          </div>
+
+          <div className="bg-card p-6 rounded-2xl border border-border text-left space-y-3">
+            <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg">Expense Tracking</h3>
+            <p className="text-sm text-zinc-500">Keep your overhead in check with our dedicated financials module.</p>
+          </div>
+        </div>
       </div>
-
-      {/* Edit Modal */}
-      <TradeDetailModal
-        isOpen={isModalOpen}
-        trade={selectedTrade}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleUpdateTrade}
-      />
-
-      {/* Quick Add Modal */}
-      <AddTradeModal
-        isOpen={isAddModalOpen}
-        date={quickAddDate}
-        onClose={() => setIsAddModalOpen(false)}
-        onAddTrade={handleAddTrade}
-      />
-    </main >
+    </main>
   );
 }

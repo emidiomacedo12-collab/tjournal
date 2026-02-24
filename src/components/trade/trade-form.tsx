@@ -11,6 +11,7 @@ export type Trade = StorageTrade;
 interface TradeFormProps {
     onAddTrade: (trade: Trade) => void;
     initialDate?: Date;
+    userId: string;
 }
 
 export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
@@ -21,6 +22,8 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
 
     // OCR Scanning State
     const [isScanning, setIsScanning] = useState(false);
+    const [scannedRawText, setScannedRawText] = useState<string | null>(null);
+    const [showDebugText, setShowDebugText] = useState(false);
 
     const [formData, setFormData] = useState<Partial<Trade> & {
         timestamp: string;
@@ -73,19 +76,24 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
         try {
             const data = await parseTradeScreenshot(file);
             console.log("Scanned Data:", data);
+            setScannedRawText(data.text || null);
 
             setFormData(prev => ({
                 ...prev,
                 symbol: data.symbol || prev.symbol,
                 side: data.side || prev.side,
                 price: data.price || prev.price,
-                quantity: data.quantity || prev.quantity
+                quantity: data.quantity || prev.quantity,
+                stopLoss: data.stopLoss || prev.stopLoss,
+                target: data.target || prev.target
             }));
 
             const found = [];
             if (data.symbol) found.push("Symbol");
-            if (data.price) found.push("Price");
+            if (data.price) found.push("Entry");
             if (data.side) found.push("Side");
+            if (data.stopLoss) found.push("Stop Loss");
+            if (data.target) found.push("Target");
 
             if (found.length > 0) {
                 setMessage(`Auto-filled: ${found.join(", ")}`);
@@ -143,7 +151,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
         setMessage("");
 
         // Streak Breaker Logic
-        const todayStats = storage.getTrades().filter(t =>
+        const todayStats = storage.getTrades(user?.id || "demo-user").filter(t =>
             t.symbol === formData.symbol?.toUpperCase() &&
             new Date(t.timestamp).toDateString() === new Date().toDateString()
         );
@@ -226,7 +234,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
             {/* --- OCR SCANNER (Top of Form) --- */}
             <div className="mb-8 p-4 bg-blue-500/5 rounded-lg border border-blue-500/20">
                 <label className="block text-sm font-bold text-blue-400 mb-2">
-                    🪄 Auto-Fill from Screenshot (Optional)
+                    🪄 Auto-Fill from TradingView Screenshot (Optional)
                 </label>
                 <div className="flex items-center justify-center w-full">
                     <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-blue-500/30 border-dashed rounded-lg cursor-pointer bg-blue-500/5 hover:bg-blue-500/10 transition-colors">
@@ -235,8 +243,8 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                                 <p className="text-sm text-blue-400 animate-pulse">Scanning...</p>
                             ) : (
                                 <>
-                                    <p className="text-sm text-zinc-400"><span className="font-semibold text-blue-400">Click to upload</span> broker screenshot</p>
-                                    <p className="text-xs text-zinc-500">Auto-detects Symbol, Price, Side</p>
+                                    <p className="text-sm text-zinc-400"><span className="font-semibold text-blue-400">Click to upload</span> TradingView screenshot</p>
+                                    <p className="text-xs text-zinc-500">Auto-detects Entry, Stop, Target</p>
                                 </>
                             )}
                         </div>
@@ -250,6 +258,27 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                     </label>
                 </div>
             </div>
+
+            {/* Debug Scan Text */}
+            {scannedRawText && (
+                <div className="mb-6 p-3 bg-zinc-900/50 rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500">Scan Diagnostics</span>
+                        <button
+                            type="button"
+                            onClick={() => setShowDebugText(!showDebugText)}
+                            className="text-xs text-blue-400 hover:underline"
+                        >
+                            {showDebugText ? "Hide Raw Text" : "View Raw Text"}
+                        </button>
+                    </div>
+                    {showDebugText && (
+                        <pre className="text-[10px] text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto bg-black/20 p-2 rounded">
+                            {scannedRawText}
+                        </pre>
+                    )}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -347,7 +376,7 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                         <button
                             type="button"
                             onClick={handleNextPhase}
-                            className="w-full py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all"
+                            className="w-full py-3 rounded-lg font-bold text-white bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                         >
                             Confirm Setup -&gt;
                         </button>
@@ -376,11 +405,11 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
                             <div className="flex items-end gap-2">
                                 <label className="flex-1 cursor-pointer">
                                     <input type="radio" name="side" value="BUY" checked={formData.side === "BUY"} onChange={handleChange} className="sr-only peer" />
-                                    <div className="text-center py-2 rounded-lg border border-border peer-checked:bg-green-600 peer-checked:text-white transition-all">Buy</div>
+                                    <div className="text-center py-2 rounded-lg border border-border peer-checked:bg-green-600 peer-checked:text-white transition-all text-xs font-bold uppercase tracking-wider">Long</div>
                                 </label>
                                 <label className="flex-1 cursor-pointer">
                                     <input type="radio" name="side" value="SELL" checked={formData.side === "SELL"} onChange={handleChange} className="sr-only peer" />
-                                    <div className="text-center py-2 rounded-lg border border-border peer-checked:bg-red-600 peer-checked:text-white transition-all">Sell</div>
+                                    <div className="text-center py-2 rounded-lg border border-border peer-checked:bg-red-600 peer-checked:text-white transition-all text-xs font-bold uppercase tracking-wider">Short</div>
                                 </label>
                             </div>
                         </div>
@@ -496,7 +525,11 @@ export function TradeForm({ onAddTrade, initialDate }: TradeFormProps) {
 
                         <div className="flex gap-2">
                             <button type="button" onClick={() => setCurrentPhase("B")} className="flex-1 py-2 rounded-lg border border-border hover:bg-muted">Back</button>
-                            <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-1 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-green-700 hover:to-emerald-600 shadow-lg shadow-green-500/20 transition-all active:scale-95"
+                            >
                                 {loading ? "Logging..." : "Commit Trade"}
                             </button>
                         </div>

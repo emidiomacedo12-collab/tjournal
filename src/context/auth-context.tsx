@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { storage } from "@/lib/storage";
 
 // Mock User Type
 interface User {
@@ -11,7 +12,8 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    login: () => void;
+    login: (email: string, password: string) => Promise<boolean>;
+    signup: (email: string, password: string, name: string) => Promise<boolean>;
     logout: () => void;
     isLoading: boolean;
 }
@@ -23,31 +25,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate checking for existing session
-        const storedUser = localStorage.getItem("mock_user");
+        const storedUser = localStorage.getItem("current_user");
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
         setIsLoading(false);
     }, []);
 
-    const login = () => {
-        const mockUser = {
-            id: "user-123",
-            email: "demo@example.com",
-            name: "Emidio",
-        };
-        setUser(mockUser);
-        localStorage.setItem("mock_user", JSON.stringify(mockUser));
+    const login = async (email: string, password: string) => {
+        const existingUser = storage.findUserByEmail(email);
+        if (existingUser && existingUser.password === password) {
+            setUser(existingUser);
+            localStorage.setItem("current_user", JSON.stringify(existingUser));
+            return true;
+        }
+        return false;
+    };
+
+    const signup = async (email: string, password: string, name: string) => {
+        const existingUser = storage.findUserByEmail(email);
+        if (existingUser) return false;
+
+        const newUser = storage.addUser({ email, password, name });
+        setUser(newUser);
+        localStorage.setItem("current_user", JSON.stringify(newUser));
+        return true;
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem("mock_user");
+        localStorage.removeItem("current_user");
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

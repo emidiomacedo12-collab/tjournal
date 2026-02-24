@@ -1,22 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ExpenseTracker } from "@/components/expense/expense-tracker";
-import { ExpenseCalendar } from "@/components/expense/expense-calendar";
+import { useAuth } from "@/context/auth-context";
 import { MonthlyExpenseSummary } from "@/components/expense/monthly-expense-summary";
-import { storage } from "@/lib/storage";
+import { ExpenseForm } from "@/components/expense/expense-form";
+import { ExpenseList } from "@/components/expense/expense-list";
+import { ExpenseCalendar } from "@/components/expense/expense-calendar";
+import { storage, Expense } from "@/lib/storage";
+
+import { ExpensesGrid } from "@/components/dashboard/ExpensesGrid";
 
 export default function ExpensesPage() {
-    const [expenses, setExpenses] = useState<any[]>([]);
+    const { user } = useAuth();
+    const [expenses, setExpenses] = useState<Expense[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
     useEffect(() => {
-        setExpenses(storage.getExpenses() || []);
-    }, []);
+        if (user) {
+            setExpenses(storage.getExpenses(user.id) || []);
+        } else {
+            setExpenses([]);
+        }
+    }, [user]);
 
-    const handleAddExpense = (expense: any) => {
-        const newExpenses = [expense, ...expenses];
-        setExpenses(newExpenses);
+    const handleAddExpense = (expense: Omit<Expense, 'id' | 'createdAt'>) => {
+        if (!user) return;
+        const newExpense = storage.addExpense({ ...expense, userId: user.id });
+        setExpenses([newExpense, ...expenses]);
     };
 
     const handleDeleteExpense = (id: string) => {
@@ -25,40 +35,42 @@ export default function ExpensesPage() {
         storage.deleteExpense(id);
     };
 
-    // Filter expenses for the selected date
     const filteredExpenses = expenses.filter(e =>
         new Date(e.date).toDateString() === selectedDate.toDateString()
     );
 
     return (
-        <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-background text-foreground font-sans pb-32">
-            <div className="w-full max-w-7xl space-y-8">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className="w-full md:w-1/3 space-y-6">
-                        <MonthlyExpenseSummary expenses={expenses} />
+        <main className="flex min-h-screen flex-col items-center bg-background text-foreground font-sans transition-colors duration-300">
+            <div className="w-full px-4 md:px-8 py-4 md:py-8">
+                <div className="flex justify-between items-center mb-8 px-4">
+                    <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-emerald-400 bg-clip-text text-transparent">Financials</h1>
+                    <div className="text-sm font-medium bg-zinc-900/50 dark:bg-zinc-800/50 text-foreground px-4 py-2 rounded-full border border-border backdrop-blur-sm">
+                        {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+
+                <ExpensesGrid
+                    summary={<MonthlyExpenseSummary expenses={expenses} />}
+                    form={
+                        <ExpenseForm
+                            onAddExpense={handleAddExpense}
+                            initialDate={selectedDate}
+                        />
+                    }
+                    calendar={
                         <ExpenseCalendar
                             expenses={expenses}
                             currentDate={selectedDate}
                             onDateSelect={setSelectedDate}
                         />
-                    </div>
-
-                    <div className="w-full md:w-2/3">
-                        <div className="flex justify-between items-center mb-6">
-                            <h1 className="text-3xl font-bold">Expenses</h1>
-                            <div className="text-sm text-zinc-500 font-medium bg-muted px-3 py-1 rounded-full">
-                                {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                            </div>
-                        </div>
-
-                        <ExpenseTracker
+                    }
+                    list={
+                        <ExpenseList
                             expenses={filteredExpenses}
-                            onAddExpense={handleAddExpense}
                             onDeleteExpense={handleDeleteExpense}
-                            initialDate={selectedDate}
                         />
-                    </div>
-                </div>
+                    }
+                />
             </div>
         </main>
     );

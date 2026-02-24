@@ -57,8 +57,13 @@ export function TradeList({ trades, onDelete, onSelect }: TradeListProps) {
                                 })}
                             </td>
                             <td className="px-4 py-3 font-bold text-zinc-900 dark:text-zinc-100">{trade.symbol}</td>
-                            <td className={`px-4 py-3 font-bold ${trade.side === "BUY" ? "text-green-600" : "text-red-600"}`}>
-                                {trade.side}
+                            <td className="px-4 py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${trade.side === "BUY"
+                                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                                    : "bg-red-500/10 text-red-500 border border-red-500/20"
+                                    }`}>
+                                    {trade.side === "BUY" ? "LONG" : "SHORT"}
+                                </span>
                             </td>
                             <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">${trade.price.toFixed(2)}</td>
                             <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">{trade.quantity}</td>
