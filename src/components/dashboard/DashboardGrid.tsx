@@ -16,14 +16,14 @@ type GridLayouts = { [key: string]: GridLayoutItem[] };
 
 const defaultLayouts: GridLayouts = {
     lg: [
-        { i: "pnl", x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-        { i: "avg", x: 3, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-        { i: "winRate", x: 6, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-        { i: "factor", x: 9, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-        { i: "equity", x: 0, y: 4, w: 8, h: 8, minW: 6, minH: 6 },
-        { i: "gatekeeper", x: 8, y: 4, w: 4, h: 8, minW: 4, minH: 6 },
-        { i: "calendar", x: 0, y: 12, w: 12, h: 10, minW: 8, minH: 6 },
-        { i: "trades", x: 0, y: 22, w: 12, h: 10, minW: 8, minH: 6 },
+        { i: "pnl", x: 0, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: "avg", x: 3, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: "winRate", x: 6, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: "factor", x: 9, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: "equity", x: 0, y: 3, w: 8, h: 8, minW: 2, minH: 2 },
+        { i: "gatekeeper", x: 8, y: 3, w: 4, h: 8, minW: 2, minH: 2 },
+        { i: "calendar", x: 0, y: 11, w: 12, h: 10, minW: 3, minH: 3 },
+        { i: "trades", x: 0, y: 21, w: 12, h: 10, minW: 3, minH: 3 },
     ],
     md: [
         { i: "pnl", x: 0, y: 0, w: 5, h: 4 },
@@ -107,22 +107,22 @@ export function DashboardGrid({
             margin={[24, 24]}
         >
             <div key="pnl">
-                <Widget id="pnl" title="Net P&L" hideHeader noPadding>
+                <Widget id="pnl" title="Net P&L" compact noPadding>
                     {pnlStat}
                 </Widget>
             </div>
             <div key="avg">
-                <Widget id="avg" title="Avg. Win/Loss" hideHeader noPadding>
+                <Widget id="avg" title="Avg. Win/Loss" compact noPadding>
                     {avgStat}
                 </Widget>
             </div>
             <div key="winRate">
-                <Widget id="winRate" title="Win Rate" hideHeader noPadding>
+                <Widget id="winRate" title="Win Rate" compact noPadding>
                     {winRateStat}
                 </Widget>
             </div>
             <div key="factor">
-                <Widget id="factor" title="Profit Factor" hideHeader noPadding>
+                <Widget id="factor" title="Profit Factor" compact noPadding>
                     {factorStat}
                 </Widget>
             </div>
@@ -137,12 +137,12 @@ export function DashboardGrid({
                 </Widget>
             </div>
             <div key="calendar">
-                <Widget id="calendar" title="Calendar View" hideHeader noPadding>
+                <Widget id="calendar" title="Calendar View" noPadding>
                     {calendar}
                 </Widget>
             </div>
             <div key="trades">
-                <Widget id="trades" title="Trade History" hideHeader noPadding>
+                <Widget id="trades" title="Trade History" noPadding>
                     {trades}
                 </Widget>
             </div>
